@@ -1,0 +1,153 @@
+---
+title: "DAT537 Final Project"
+author: "Adrian Cao"
+date: "2022-12-02"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+library(cbw)
+library(czzg)
+library(ggplot2)
+library(gridExtra)
+```
+
+## DAT 537 Final Project
+
+Mingxuan(Adrian) Cao BA 2024
+
+\newpage
+
+# Q1
+
+I randomly selected 30 stocks from the S&P 500 companies, there are:
+
+W. R. Berkley Corporation WRB
+
+Expeditors International of Washington Inc. EXPD
+
+Caterpillar Inc. CAT
+
+Quanta Services Inc. PWR
+
+O'Reilly Auto Parts ORLY
+
+Prudential Financial Inc. PRU
+
+Aflac Incorporated AFL
+
+Walmart WMT
+
+Becton Dickinson and Company BDX
+
+Southwest Airlines LUV
+
+NetApp Inc. NTAP
+
+PulteGroup PHM
+
+Verizon Communications Inc. VZ
+
+Weyerhaeuser Company WY
+
+FMC Corporation FMC
+
+Pinnacle West Capital Corporation PNW
+
+Baker Hughes Company Class A BKR
+
+Rollins, Inc. ROL
+
+Regions Financial Corporation RF
+
+Citigroup C
+
+Allstate Corporation ALL
+
+Evergy Inc. EVRG
+
+Illinois Tool Works Inc. ITW
+
+The Estée Lauder Companies Inc. EL
+
+Match Group Inc. MTCH
+
+STERIS Plc STE
+
+FedEx FDX
+
+Wells Fargo & Company WFC
+
+Newmont Corporation NEM
+
+Biogen Inc. BIIB
+
+# Q2
+
+```{r}
+datdf = getfinmdat(symbols = c("WRB","EXPD","CAT","PWR","ORLY",
+                               "PRU","AFL","WMT","BDX","LUV",
+                               "NTAP","PHM","VZ","WY","FMC",
+                               "PNW","BKR","ROL","RF","C",
+                               "ALL","EVRG","ITW","EL","MTCH",
+                               "STE","FDX","WFC","NEM","BIIB"),
+                   symnames = c("Berkley","Expeditors","Caterpillar","Quanta","OReilly",
+                                "Prudential","Aflac","Walmart","BectonDickinson","Southwest",
+                                "NetApp","PulteGroup","Verizon","Weyerhaeuser","FMC",
+                                "PinnacleWest","BakerHughes","Rollins","Regions","Citigroup",
+                                "Allstate","Evergy","Illinois","EstéeLauder","Match",
+                                "STERIS","FedEx","WellsFargo","Newmont","Biogen"),
+                   from = as.Date("2004-12-31"),
+                   to = as.Date("2018-12-31"))
+head(datdf)
+```
+
+# Q3
+
+```{r}
+data(factor12)
+data = factor12
+nug = c(4,5,6)
+
+thetamls = mapply(FUN="CZZscant",
+                    nu = nug,
+                    MoreArgs = list(data = data,mustinclude = "Mkt",m = 2000,nclust = 4),
+                    SIMPLIFY = FALSE)
+scanord = list()
+scanord[[1]] = thetamls[[1]]$scanord
+scanord[[2]] = thetamls[[2]]$scanord
+scanord[[3]] = thetamls[[3]]$scanord
+
+scanloglik = c()
+scanloglik[1] = scanord[[1]][1,]['logmarg']
+scanloglik[2] = scanord[[2]][1,]['logmarg']
+scanloglik[3] = scanord[[3]][1,]['logmarg']
+#nu = 5 is the best out of these three
+
+xbest = names(which(scanord[[which.max(scanloglik)]][1,]==1))
+xbest
+```
+
+# Q4
+
+```{r}
+data = factor12[373:540,]
+factor22 = cbind(datdf[,1:30],data)
+colnames(factor22)
+```
+# Q5
+```{r}
+pout = pricing(xnames = xbest,
+               data = factor22)
+pout
+
+wp = sum(pout[1:30,3] > .69)
+wp
+wnp = sum(pout[1:30,3] < -.69)
+wnp
+```
+
