@@ -733,13 +733,15 @@
 
             // Get all the elements from the page
             let points =
-                document.getElementById("points");
+                this.parentElement.firstChild;
+            //document.getElementById("points");
 
             let showMoreText =
-                document.getElementById("moreText");
+                this.parentElement.firstChild.nextSibling;
+            //document.getElementById("moreText");
 
-            let buttonText =
-                document.getElementById("textButton");
+            let buttonText = this;
+            //document.getElementById("textButton");
 
             // If the display property of the dots 
             // to be displayed is already set to 
