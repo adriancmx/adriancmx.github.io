@@ -99,7 +99,7 @@
                         <a class="nav-link " href="/#teaching" data-target="#teaching"><span>Teaching</span></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link " href="/#presentation" data-target="#presentation"><span>Presentations</span></a>
+                        <a class="nav-link " href="/#project" data-target="#project"><span>Projects</span></a>
                     </li>
 
                     <li class="nav-item">
@@ -151,7 +151,7 @@
                         <ul class="network-icon" aria-hidden="true">
                             <li>
                                 <a href="https://adriancmx.github.io/Adrian_Cao_CV%20(2).pdf" target="_blank" rel="noopener">
-                                    <i class="fa fa-file-pdf-o big-icon"></i>
+                                    <i class="fa fa-file-pdf-o big-icon" aria-hidden="true"></i>
                                 </a>
                             </li>
                             <li>
@@ -349,6 +349,123 @@
                         </div>
 
 
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="project" class="home-section wg-portfolio   ">
+        <div class="container">
+
+            <div class="row">
+                <div class="col-12 col-lg-4 section-heading">
+
+                    <h1>Projects</h1>
+
+
+                </div>
+                <div class="col-12 col-lg-8">
+
+                    <div class=" row js-layout-row ">
+
+                        <!-- 第一个research的 -->
+                        <div class="col-12 isotope-item js-id-research">
+                            <div class="media stream-item">
+                                <div class="media-body">
+
+                                    <h3 class="article-title mb-0 mt-0">
+                                        <!-- 这里不写research名字吗还是啥 -->
+                                        Folder BNP: Nonparametric Bayesian
+                                    </h3>
+
+
+                                    <div class="article-style">
+                                        New Split-Merge MCMC Algorithm for Dirichlet Processes. This project aims to enhance the Gibbs sampler, commonly used in Bayesian mixture models, by addressing its tendency to become trapped in isolated modes, especially in cases of similar clusters.
+                                        This trapping issue can lead to poor mixing and convergence of the chain. Neal's proposed random split-merge scheme offers a solution but has limitations, especially when designing proposals conditional on the data.
+                                        Despite the introduction of other variants like the smart-dumb algorithm, a significant challenge remains due to their fairly low acceptance probability. This project proposes an innovative approach by integrating
+                                        the flexible framework of the Multiple Try Metropolis into the split-merge algorithm. The goal is to create a Multiple Try Split Merge algorithm that suggests various proposal distributions and a conditional move
+                                        type structure, improving the decision-making for splitting or merging based on the data. The project also envisions potential implementation of the new algorithm on simulated data, time permitting.
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 第二个research的 -->
+                        <div class="col-12 isotope-item js-id-research">
+                            <div class="media stream-item">
+                                <div class="media-body">
+
+                                    <h3 class="article-title mb-0 mt-0">
+                                        <!-- 这里不写research名字吗还是啥 -->
+                                        Folder Transfer Learning: Transfer Learning for Non-parametric Regression
+                                        <!-- <a href="/research/amgen/">AMGEN INC.</a> -->
+                                    </h3>
+
+
+                                    <div class="article-style">
+                                        This project delves into transfer learning, a potent technique in Machine Learning and Statistical Learning, which leverages knowledge from a source task to enhance model performance on a related target task. Specifically, in nonparametric regression,
+                                        transfer learning can significantly bolster prediction accuracy by utilizing insights from a source dataset with similar attributes to analyze a target dataset. This endeavor proposes employing the Confidence Threshold
+                                        Algorithm by Tony Cai to facilitate transfer learning in nonparametric regression.
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 第三个research的 -->
+                        <div class="col-12 isotope-item js-id-research">
+                            <div class="media stream-item">
+                                <div class="media-body">
+
+                                    <h3 class="article-title mb-0 mt-0">
+                                        <!-- 这里不写research名字吗还是啥 -->
+                                        Folder HeteroPCA: Gamma-based HeteroPCA Algorithm
+                                    </h3>
+
+                                    <div class="article-style">
+                                        The HeteroPCA algorithm, introduced by Anru Zhang and Tony Cai and Yihong Wu, is a significant advancement in principal component analysis (PCA) in the presence of heteroskedastic noise. It is designed to extract low-rank structures from noisy observations,
+                                        proving to be computationally efficient and optimally functional under a generalized spiked covariance model. However, HeteroPCA primarily operates on the data matrix and encounters challenges due to ill-conditioning,
+                                        particularly when dealing with unbalanced dimensionality in high-dimensional data. In the context of varying aspect ratios (gamma), HeteroPCA's performance is inconsistent. Recognizing these limitations, a more
+                                        parametric-based algorithm is proposed, aiming to optimize HeteroPCA's performance based on different γ values. This novel approach, inspired by the Deflated-HeteroPCA algorithm, seeks to overcome the curse of ill-conditioning
+                                        that hampers HeteroPCA. Deflated-HeteroPCA strategically divides the spectrum of the matrix into well-conditioned and mutually well-separated subblocks, applying HeteroPCA successively to each, thus enhancing statistical
+                                        accuracy and overcoming challenges associated with high dimensionality and heteroskedastic noise.
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 第四个 -->
+
+                        <div class="col-12 isotope-item js-id-research">
+                            <div class="media stream-item">
+                                <div class="media-body">
+
+                                    <h3 class="article-title mb-0 mt-0">
+                                        <!-- 这里不写research名字吗还是啥 -->
+                                        Folder Asset Pricing: A Bayesian model for Asset Pricing
+                                    </h3>
+
+
+                                    <div class="article-style">
+                                        In a groundbreaking project inspired by the work of Professor Sid Chib, a Bayesian model scan strategy is applied to address a pivotal question in understanding the cross-section of expected returns of equities: Which factors, from a given collection,
+                                        are genuine risk factors or constituents of the stochastic discount factor (SDF)? The SDF, though unobservable, plays a crucial role in asset pricing, embodying the economic theory that underpins the relationship
+                                        between risk and expected returns. Traditional statistical variable selection methods, such as those based on the lasso and its variants, are not applicable here due to the distinct and nonnested nature of the restricted
+                                        factors models. These models don't merely arise from the omission or inclusion of variables from a full model; instead, they are characterized by specific restrictions on the joint distribution of factors, emanating
+                                        from assumptions about which factors are included in the SDF.
+
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
 
