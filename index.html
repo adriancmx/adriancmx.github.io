@@ -384,7 +384,7 @@
                                         New Split-Merge MCMC Algorithm for Dirichlet Processes. This project aims to enhance the Gibbs sampler, commonly used in Bayesian mixture models, by addressing its tendency to become trapped in isolated modes, especially in cases of similar clusters.
                                         This trapping issue can lead to poor mixing and convergence of the chain.
                                         <span class="points">...</span>
-                                        <span class="moreText" style="display:none">Neal's proposed random split-merge scheme offers a solution but has limitations, especially when designing proposals conditional on the data.
+                                        <span class="moreText" id="text1" style="display:none">Neal's proposed random split-merge scheme offers a solution but has limitations, especially when designing proposals conditional on the data.
                                         Despite the introduction of other variants like the smart-dumb algorithm, a significant challenge remains due to their fairly low acceptance probability. This project proposes an innovative approach by integrating
                                         the flexible framework of the Multiple Try Metropolis into the split-merge algorithm. The goal is to create a Multiple Try Split Merge algorithm that suggests various proposal distributions and a conditional move
                                         type structure, improving the decision-making for splitting or merging based on the data. The project also envisions potential implementation of the new algorithm on simulated data, time permitting.
@@ -392,7 +392,7 @@
                                         <a href="https://adriancmx.github.io/research/BNP/reference%20code.R" target="_blank">Code.</a>
                                         </span>
 
-                                        <button style="background-color:white; color:blue;border:0px" onclick="toggleText(this)" class="textButton">
+                                        <button style="background-color:white; color:blue;border:0px" onclick="toggleText(this)" data-target="text1" class="textButton">
                                             Show More
                                         </button>
                                     </div>
@@ -415,14 +415,14 @@
 
                                     <div class="article-style">
                                         This project delves into transfer learning, a potent technique in Machine Learning and Statistical Learning, which leverages knowledge from a source task to enhance model performance on a related target task.
-                                        <span id="points">...</span>
-                                        <span id="moreText" style="display:none">
+                                        <span class="points">...</span>
+                                        <span class="moreText" id="text2" style="display:none">
                                         Specifically, in nonparametric regression,
                                         transfer learning can significantly bolster prediction accuracy by utilizing insights from a source dataset with similar attributes to analyze a target dataset. This endeavor proposes employing the Confidence Threshold
                                         Algorithm by Tony Cai to facilitate transfer learning in nonparametric regression.
                                         <a href="https://adriancmx.github.io/research/Transfer%20Learning/496_project_plan.pdf" target="_blank">PDF.</a>
                                         <a href="https://adriancmx.github.io/research/Transfer%20Learning/496%20project.R" target="_blank">Code.</a></span>
-                                        <button style="background-color:white; color:blue;border:0px" onclick="toggleText()" id="textButton">
+                                        <button style="background-color:white; color:blue;border:0px" onclick="toggleText(this)" data-target="text2" class="textButton">
                                             Show More
                                         </button>
                                     </div>
@@ -443,14 +443,14 @@
                                     <div class="article-style">
                                         The HeteroPCA algorithm, introduced by Anru Zhang and Tony Cai and Yihong Wu, is a significant advancement in principal component analysis (PCA) in the presence of heteroskedastic noise. It is designed to extract low-rank structures from noisy observations,
                                         proving to be computationally efficient and optimally functional under a generalized spiked covariance model.
-                                        <span id="points">...</span>
-                                        <span id="moreText" style="display:none">However, HeteroPCA primarily operates on the data matrix and encounters challenges due to ill-conditioning,
+                                        <span class="points">...</span>
+                                        <span class="moreText" id="text3" style="display:none">However, HeteroPCA primarily operates on the data matrix and encounters challenges due to ill-conditioning,
                                         particularly when dealing with unbalanced dimensionality in high-dimensional data. In the context of varying aspect ratios (gamma), HeteroPCA's performance is inconsistent. Recognizing these limitations, a more
                                         parametric-based algorithm is proposed, aiming to optimize HeteroPCA's performance based on different γ values. This novel approach, inspired by the Deflated-HeteroPCA algorithm, seeks to overcome the curse of ill-conditioning
                                         that hampers HeteroPCA. Deflated-HeteroPCA strategically divides the spectrum of the matrix into well-conditioned and mutually well-separated subblocks, applying HeteroPCA successively to each, thus enhancing statistical
                                         accuracy and overcoming challenges associated with high dimensionality and heteroskedastic noise.
                                         <a href="https://adriancmx.github.io/research/HeteroPCA/HeteroPCA.R" target="_blank">Code</a></span>
-                                        <button style="background-color:white; color:blue;border:0px" onclick="toggleText()" id="textButton">
+                                        <button style="background-color:white; color:blue;border:0px" onclick="toggleText()" data-target="text3" class="textButton">
                                             Show More
                                         </button>
                                     </div>
@@ -474,14 +474,14 @@
                                     <div class="article-style">
                                         In a groundbreaking project inspired by the work of Professor Sid Chib, a Bayesian model scan strategy is applied to address a pivotal question in understanding the cross-section of expected returns of equities: Which factors, from a given collection,
                                         are genuine risk factors or constituents of the stochastic discount factor (SDF)?
-                                        <span id="points">...</span>
-                                        <span id="moreText" style="display:none">The SDF, though unobservable, plays a crucial role in asset pricing, embodying the economic theory that underpins the relationship
+                                        <span class="points">...</span>
+                                        <span class="moreText" id="text4" style="display:none">The SDF, though unobservable, plays a crucial role in asset pricing, embodying the economic theory that underpins the relationship
                                         between risk and expected returns. Traditional statistical variable selection methods, such as those based on the lasso and its variants, are not applicable here due to the distinct and nonnested nature of the restricted
                                         factors models. These models don't merely arise from the omission or inclusion of variables from a full model; instead, they are characterized by specific restrictions on the joint distribution of factors, emanating
                                         from assumptions about which factors are included in the SDF.
                                         <a href="https://adriancmx.github.io/research/Asset%20Pricing/DAT537_Final-Project_Adrian-Cao%20(1).pdf" target="_blank">PDF.</a>
                                         <a href="https://adriancmx.github.io/research/Asset%20Pricing/DAT537_Final%20Project_Adrian%20Cao-1.Rmd" target="_blank">Code.</a></span>
-                                        <button style="background-color:white; color:blue; border:0px" onclick="toggleText()" id="textButton">
+                                        <button style="background-color:white; color:blue; border:0px" onclick="toggleText()" data-target="text4" class="textButton">
                                             Show More
                                         </button>
                                     </div>
@@ -729,52 +729,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
 
     <script>
-        function toggleText(this) {
-
-            // Get all the elements from the page
-            let points =
-                this.parentElement.firstChild;
-            //document.getElementById("points");
-
-            let showMoreText =
-                this.parentElement.firstChild.nextSibling;
-            //document.getElementById("moreText");
-
-            let buttonText = this;
-            //document.getElementById("textButton");
-
-            // If the display property of the dots 
-            // to be displayed is already set to 
-            // 'none' (that is hidden) then this 
-            // section of code triggers
-            if (points.style.display === "none") {
-
-                // Hide the text between the span
-                // elements
-                showMoreText.style.display = "none";
-
-                // Show the dots after the text
-                points.style.display = "inline";
-
-                // Change the text on button to 
-                // 'Show More'
-                buttonText.innerHTML = "Show More";
-            }
-
-            // If the hidden portion is revealed,
-            // we will change it back to be hidden
-            else {
-
-                // Show the text between the
-                // span elements
-                showMoreText.style.display = "inline";
-
-                // Hide the dots after the text
-                points.style.display = "none";
-
-                // Change the text on button
-                // to 'Show Less'
-                buttonText.innerHTML = "Show Less";
+        function toggleText(button) {
+            var targetId = button.getAttribute('data-target');
+            var text = document.getElementById(targetId);
+            if (text.style.display === "none") {
+                text.style.display = "block";
+                button.textContent = "Show Less";
+            } else {
+                text.style.display = "none";
+                button.textContent = "Show More";
             }
         }
     </script>
