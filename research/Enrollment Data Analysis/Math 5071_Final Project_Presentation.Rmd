@@ -1,0 +1,655 @@
+---
+title: "Math 5071-Final Project Presentation"
+author: "Adrian Cao"
+institute: |
+      | Department of Statistics and Data Science
+      | Washington University in St.Louis
+date: "2023-12-04"
+output: 
+  beamer_presentation:
+    theme: "Madrid"
+    colortheme: "default"
+    fonttheme: "structurebold"
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(tidyr)
+library(MASS)
+library(robustbase)
+library(quantreg)
+library(leaps)
+library(dplyr)
+library(reshape2)
+library(stringr)
+library(nnet)
+library(VIM)
+library(caret)
+library(mgcv)
+library(glmnet)
+library(kableExtra)
+enrollment <- read.csv("C:/Users/a_i_b/Downloads/enrollment_2017_2022.csv")
+```
+
+## Central Question
+
+\huge What Factors Influence the Enrollment of Math courses?
+
+\normalsize
+
+What is Enrollment?
+
+## Data Introduction
+
+First, we identify that the data set contains 11 variable columns:
+
+```{=tex}
+\begin{enumerate}
+\item X: Appears to be an index or identifier for each record.
+\item StdtId: Encrypted Student ID.
+\item \textbf{Sem: Semester of enrollment, including both year and semester code (05 for Fall, 02 for Spring).}
+\item \textbf{Crs: Course number.}
+\item Sec: Section number of the course.
+\item SecType: Section type, where 'S' indicates a standard lecture section.
+\item Units: The number of units for the course.
+\item DeanCd: Title of the course.
+\item GradeOpt: Grade option selected by the student.
+\item \textbf{PrimeDiv: Primary department of the student.}
+\item YRLevel: Year level of the student.
+\end{enumerate}
+```
+Our analysis will focus on 100- and 200-level courses and exclude discussion sections.
+For this, we need to filter the data based on the Crs and SecType columns.
+
+## Quick Recap of the data
+
+```{r}
+head(enrollment)
+```
+
+## Data Filter and Preparation
+
+Here, I used 'dplyr' package to do the filter, following these steps:
+
+-   Filter the dataset for 100- and 200-level courses.
+-   Exclude discussion sections (SecType != 'S').
+-   Analyze enrollment trends over the years and during the COVID period.
+
+For the missingness, as there is only very few of missing values for YRlevel, so I just delete the missing ones.
+
+```{r, fig.width=5, fig.height=2.5}
+# Filter the data for 100- and 200-level courses and SecType 'S'
+filtered_enrollment <- enrollment %>%
+  filter(Crs >= 100 & Crs < 300 & SecType == 'S')
+
+# Example: Convert 'Sem' into separate 'Year' and 'Semester' variables
+filtered_enrollment <- filtered_enrollment %>%
+  mutate(Year = as.integer(substr(Sem, 1, 4)),
+         Semester = as.integer(substr(Sem, 5, 6)))
+# Adjusting semester extraction
+filtered_enrollment$Semester <- ifelse(filtered_enrollment$Semester == '5', 'Fall', 'Spring')
+
+aggr_plot <- aggr(filtered_enrollment, col=c('navyblue','yellow'), numbers=TRUE, sortVars=TRUE, labels=names(filtered_enrollment), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+
+filtered_enrollment <- na.omit(filtered_enrollment, cols = "YRLevel")
+```
+
+## Exploratory Data Analysis
+
+Before diving deep into the model building, we start with some exploratory data analysis to better understand the distribution and charateristics of the data, including trends over time, enrollment patterns by course, department, year levels, and COVID period.
+
+## Enrollment Distribution by Years
+
+```{r, fig.width=5, fig.height=2.5}
+
+# Group data by Year and Semester to get the count of enrollments
+enrollment_trend <- filtered_enrollment %>%
+  count(Year, Semester) %>%
+  rename(Enrollments = n)
+
+# Plotting the enrollment trend over the years
+ggplot(enrollment_trend, aes(x = Year, y = Enrollments, color = Semester)) +
+  geom_line() +
+  scale_y_continuous(limits = c(800, 2200)) +
+  theme_minimal() +
+  labs(title = 'Enrollment Trend Over the Years',
+       x = 'Year',
+       y = 'Number of Enrollments')
+```
+
+This graph provides an overview of how enrollment numbers have changed over time.
+We could tell from the graph that there would be more student enrolling in elementary math courses in fall compared to in spring semester.
+
+## Enrollment over Courses
+
+```{r,fig.height=4, fig.width=6.5}
+# Group data by Year, Semester, and Course to get the count of enrollments
+course_enrollment_trend <- filtered_enrollment %>%
+  count(Year, Semester, Crs) %>%
+  rename(Enrollments = n)
+
+# Plotting the enrollment trend over the years for different courses by Semester
+ggplot(course_enrollment_trend, aes(x = Year, y = Enrollments, group = interaction(Crs, Semester), color = Semester)) +
+  geom_line() +
+  facet_wrap(~ Crs, scales = 'free_y') +  # Separate plots for each course
+  theme_minimal() +
+  labs(title = 'Enrollment Trend by Course and Semester Over the Years',
+       x = 'Year',
+       y = 'Number of Enrollments') +
+  theme(legend.position = "bottom")
+```
+
+## Enrollment Distribution Across Different Courses
+
+```{r, fig.width=5, fig.height=2.5}
+# Enrollment distribution across different courses
+course_enrollment <- filtered_enrollment %>%
+  count(Crs) %>%
+  arrange(desc(n)) %>%
+  rename(Enrollments = n)
+
+# Plotting the courses by enrollment
+ggplot(course_enrollment, aes(x = Crs, y = Enrollments)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = 'Courses by Enrollment',
+       x = 'Course Number',
+       y = 'Number of Enrollments')
+```
+
+This graph displays the courses with the highest number of enrollments, identifying the most popular or required courses within the 100- and 200-level range would be calculus related courses.
+
+## Enrollment Distribution Across Departments
+
+```{r, fig.width=5, fig.height=2.5}
+# Enrollment trends by primary department
+department_enrollment <- filtered_enrollment %>%
+  count(PrimeDiv) %>%
+  arrange(desc(n)) %>%
+  rename(Enrollments = n)
+
+# Plotting the department-wise enrollment
+ggplot(department_enrollment, aes(x = Enrollments, y = reorder(PrimeDiv, Enrollments))) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = 'Enrollment Trends by Primary Department',
+       x = 'Number of Enrollments',
+       y = 'Primary Department')
+```
+
+This chart illustrates the distribution of enrollments across different primary departments, indicating college of arts and sciences have the highest representation in these math courses.
+However, I found this a little uninformative as the LA would be the largest departments.
+
+## Enrollment Variations by Student Year Level
+
+```{r, fig.width=5, fig.height=2.5}
+# Enrollment variations by student year level
+year_level_enrollment <- filtered_enrollment %>%
+  count(YRLevel) %>%
+  rename(Enrollments = n)
+
+# Plotting the enrollment by year level
+ggplot(year_level_enrollment, aes(x = YRLevel, y = Enrollments)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = 'Enrollment Variations by Student Year Level',
+       x = 'Year Level',
+       y = 'Number of Enrollments')
+```
+
+There are more student from year levels 1 or 2 to enroll in these courses as it is introductory courses. However, based on the data collection is based on the time it is collected, it would be fairly difficult to use this to determine student's standing.
+
+## COVID period versus non-COVID periods
+
+```{r, fig.width=5, fig.height=2.1}
+# Add a variable to indicate COVID period
+filtered_enrollment <- filtered_enrollment %>%
+  mutate(COVID_Period = ifelse(Sem >= 202002 & Sem <= 202105, "COVID", "Non-COVID"),
+         Semester = ifelse(substr(Sem, 5, 6) == '02', 'Spring', 'Fall'))
+
+# Calculate the total enrollments per semester within each COVID period
+enrollments_per_semester <- filtered_enrollment %>%
+  group_by(Sem, COVID_Period, Semester) %>%
+  summarise(Total_Enrollments = n(), .groups = 'drop')
+
+# Calculate the average enrollments for COVID and non-COVID periods by semester
+covid_comparison_by_semester <- enrollments_per_semester %>%
+  group_by(COVID_Period, Semester) %>%
+  summarise(Average_Enrollments = mean(Total_Enrollments), .groups = 'drop')
+
+# Plotting the comparison
+ggplot(covid_comparison_by_semester, aes(x = Semester, y = Average_Enrollments, fill = COVID_Period)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  labs(title = 'Comparing Enrollments by Semester: COVID Period vs Non-COVID Periods',
+       x = 'Semester',
+       y = 'Average Number of Enrollments') +
+  scale_fill_manual(values = c("Non-COVID" = "blue", "COVID" = "red"))
+```
+
+This comparison provide insights into the impact of the pandemic on course enrollments.
+However, though it may seems virtually significant (or not), we may need more statistical testing to consolidate the result.
+Also, it could be due to the reason for increasing size of the university instead of just because of the pandemic.
+
+## Statistical Modeling
+
+The first thing we do is to find the appropriate response variables.
+Given that the data is at the individual student enrollment level for each course, there are a couple of ways to construct the response variable:
+
+-   Binary Response (Logistic Regression): You could create a binary variable indicating whether a student is enrolled in a course or not (1 for enrolled, 0 for not enrolled). However, this approach might not be suitable since data seems to include only enrolled students.
+-   Count Response (Poisson or Negative Binomial Regression): A more appropriate approach might be to aggregate the data at a course level for each semester and use the total number of enrollments in each course as the response variable.
+
+Hence, here I choose to aggregate data by semester to see how it is depends on the covariates.
+
+## Modeling
+
+So the first model I build is a fairly simple model to see how average enrollment in intro-level math courses would be different by semester.
+$$Enrollment_{t} = \beta_0 +\beta_1 * Year + \beta_2 * Semester + \epsilon_t $$
+
+```{r, echo=FALSE}
+# Aggregate data
+average_enrollment <- enrollment_trend %>%
+  group_by(Year, Semester) %>%
+  summarise(Average_Enrollments = mean(Enrollments), .groups = 'drop')
+
+average_enrollment$Year_Since_2017 <- average_enrollment$Year - 2017
+
+# Then, rebuild the model with the transformed Year variable
+model_time <- lm(Average_Enrollments ~ Year_Since_2017 + Semester, data = average_enrollment)
+
+library(knitr)
+
+# Assuming 'model_time' is your linear model
+model_summary <- summary(model_time)
+
+# Create a concise summary table
+# Select key elements from the model summary to display
+concise_summary <- data.frame(
+  Estimate = model_summary$coefficients[, "Estimate"],
+  StdError = model_summary$coefficients[, "Std. Error"],
+  tValue = model_summary$coefficients[, "t value"],
+  Pr = model_summary$coefficients[, "Pr(>|t|)"]
+)
+
+# Display the table with kable
+kable(concise_summary, caption = "Model Summary Statistics", align = 'c', size = "small") %>%
+  kable_styling(font_size = 7)
+
+# Display R-squared and Adjusted R-squared
+metrics <- data.frame(
+  Metric = c("R-squared", "Adjusted R-squared"),
+  Value = c(model_summary$r.squared, model_summary$adj.r.squared)
+)
+
+kable(metrics, caption = "Model Metrics", align = 'c', size = "small") %>%
+  kable_styling(font_size = 7)
+```
+
+## Include Diagnostic Plots:
+
+```{r, fig.cap="Diagnostic plots of the linear model", echo=FALSE,fig.height=4, fig.width=6.5}
+# Plot the model diagotics
+par(mfrow = c(2, 2))
+plot(model_time)
+```
+
+## Box-Cox Transformation
+
+Though the model diagotics looks so what satisfactory, we could still see if Box-Cox could make it better.
+
+```{r, fig.cap="Box-Cox transformation", echo=FALSE,fig.height=4, fig.width=6.5}
+# Perform the Box-Cox transformation
+boxcox_result <- boxcox(Average_Enrollments ~ Year_Since_2017 + Semester, 
+                        data = average_enrollment)
+```
+
+So here, just keep what we have would be good enough
+
+## Adding Courses?
+
+The model provides a clear indication of temporal trends in enrollment, but it's essential to consider external factors that could influence these trends.
+Future models could explore additional predictors, like specific course attributes, to gain more comprehensive insights.
+
+Here, the reference group for Year, though continuous, is 2017.
+For semester, it's Fall, For courses, it's 132, calc 2.
+
+## Summary Statistics
+```{r, echo=FALSE}
+course_enrollment_trend$Year_Since_2017 <- course_enrollment_trend$Year - 2017
+course_enrollment_trend$Crs <- as.factor(course_enrollment_trend$Crs)
+course_enrollment_trend$Crs <- relevel(course_enrollment_trend$Crs, ref = "132")
+
+# Linear modeling
+model_bycourse <- lm(Enrollments ~ Year_Since_2017 + Semester + Crs, data = course_enrollment_trend)
+
+# Assuming 'model_time' is your linear model
+model_summary <- summary(model_bycourse)
+
+# Create a concise summary table
+# Select key elements from the model summary to display
+concise_summary <- data.frame(
+  Estimate = model_summary$coefficients[, "Estimate"],
+  StdError = model_summary$coefficients[, "Std. Error"],
+  tValue = model_summary$coefficients[, "t value"],
+  Pr = model_summary$coefficients[, "Pr(>|t|)"]
+)
+
+# Display the table with kable
+kable(concise_summary, caption = "Model Summary Statistics", align = 'c', size = "small") %>%
+  kable_styling(font_size = 7)
+```
+
+## 
+
+```{r, echo=FALSE}
+# Display R-squared and Adjusted R-squared
+metrics <- data.frame(
+  Metric = c("R-squared", "Adjusted R-squared"),
+  Value = c(model_summary$r.squared, model_summary$adj.r.squared)
+)
+
+kable(metrics, caption = "Model Metrics", align = 'c', size = "small")
+```
+
+## Model Diagotics
+
+```{r, fig.cap="Diagnostic plots of the linear model adding course", echo=FALSE,fig.height=4, fig.width=6.5}
+# Plot the model diagotics
+par(mfrow = c(2, 2))
+plot(model_bycourse)
+```
+
+## Not Year
+
+The lack of significance for the year could be due to multicollinearity, especially if certain courses are only offered in specific years or if there are other time-related variables that are not included in the model.
+
+```{r, echo=FALSE}
+# delete Year
+noyear_model <- lm(Enrollments ~ Semester + Crs, data = course_enrollment_trend)
+
+# Assuming 'model_time' is your linear model
+model_summary <- summary(noyear_model)
+
+# Create a concise summary table
+# Select key elements from the model summary to display
+concise_summary <- data.frame(
+  Estimate = model_summary$coefficients[, "Estimate"],
+  StdError = model_summary$coefficients[, "Std. Error"],
+  tValue = model_summary$coefficients[, "t value"],
+  Pr = model_summary$coefficients[, "Pr(>|t|)"]
+)
+
+# Display the table with kable
+kable(concise_summary, caption = "Model Summary Statistics", align = 'c', size = "small") %>%
+  kable_styling(font_size = 6)
+```
+
+##
+
+```{r, echo=FALSE}
+# Display R-squared and Adjusted R-squared
+metrics <- data.frame(
+  Metric = c("R-squared", "Adjusted R-squared"),
+  Value = c(model_summary$r.squared, model_summary$adj.r.squared)
+)
+
+kable(metrics, caption = "Model Metrics", align = 'c', size = "small")
+```
+
+## Interactions?
+
+```{r, echo=FALSE}
+# Interaction between Year and Semester
+interaction_model <- lm(Enrollments ~ Year_Since_2017 * Semester + Crs, data = course_enrollment_trend)
+
+# Assuming 'model_time' is your linear model
+model_summary <- summary(interaction_model)
+
+# Create a concise summary table
+# Select key elements from the model summary to display
+concise_summary <- data.frame(
+  Estimate = model_summary$coefficients[, "Estimate"],
+  StdError = model_summary$coefficients[, "Std. Error"],
+  tValue = model_summary$coefficients[, "t value"],
+  Pr = model_summary$coefficients[, "Pr(>|t|)"]
+)
+
+# Display the table with kable
+kable(concise_summary, caption = "Model Summary Statistics", align = 'c', size = "small") %>%
+  kable_styling(font_size = 6)
+```
+
+##
+
+```{r, echo=FALSE}
+# Display R-squared and Adjusted R-squared
+metrics <- data.frame(
+  Metric = c("R-squared", "Adjusted R-squared"),
+  Value = c(model_summary$r.squared, model_summary$adj.r.squared)
+)
+
+kable(metrics, caption = "Model Metrics", align = 'c', size = "small")
+```
+
+## Model Comparison
+
+-   **Small R-squared and Adjusted R-squared**: they all explain a similar amount of variance in enrollments and the number of predictors used is appropriate.
+-   **Year and Interaction not significant**: The inclusion of Year in the model does not add significant explanatory power. The interaction between Year and Semester is also not significant, suggesting that the effect of the semester on enrollments does not change over the years.
+-   **Semeter Coefficient Significant**: This indicates the seasonal effect is still strong in the model.
+-   **Course Coefficient Significant**: Enrollment numbers vary significantly by course
+
+Final model that may be perferable: $$Enrollment_{time, course} = \beta_0 + \beta_1 \times Semester + \beta_2 \times Crs + \epsilon$$
+
+## Cross-Validation
+
+However, we may worry it could be some over-fitting problem given the number of courses included.
+Hence, we use cross-validation to check the stability of the model.
+
+```{r, echo=FALSE}
+# Define control parameters for the cross-validation
+control <- trainControl(method = "cv", number = 10)
+
+# Fit the model using cross-validation
+cv_model <- train(Enrollments ~ Semester + Crs, 
+                  data = course_enrollment_trend, 
+                  method = "lm", 
+                  trControl = control)
+
+# Summarize the cross-validation results
+print(cv_model)
+```
+
+## Nonlinearity?
+
+Also, as we are using count for our response variable, we also think about some nonlinear model such as Poisson Regression for some analysis.
+But this model holds similiar performance as our linear ones.
+So we may just perfer our previous one.
+
+```{r, echo=FALSE}
+# Fit a GAM with potential nonlinear relationships
+gam_model <- gam(Enrollments ~ s(Year, k = 6) + Semester + s(Crs, bs = "re"), 
+                 method = "REML", 
+                 data = course_enrollment_trend)
+
+summary(gam_model)
+```
+
+## Add Primary Departments?
+
+Now, it could be primary department is also one important factor that incluences one's enrollment in math courses.
+
+```{r, echo = FALSE}
+# Aggregate the enrollment data
+department_course_enrollment <- filtered_enrollment %>%
+  group_by(Year, Semester, Crs, PrimeDiv) %>%
+  summarise(Total_Enrollments = n(), .groups = 'drop') %>%
+  ungroup()
+
+# Assuming PrimeDiv is already a factor. If not, convert it to a factor.
+department_course_enrollment$PrimeDiv <- as.factor(department_course_enrollment$PrimeDiv)
+department_course_enrollment$PrimeDiv <- relevel(department_course_enrollment$PrimeDiv, ref = "LA")
+
+# Build the linear model including PrimeDiv as a factor
+linear_model <- lm(Total_Enrollments ~ Year + Semester + Crs + PrimeDiv, data = department_course_enrollment)
+
+# Assuming 'model_time' is your linear model
+model_summary <- summary(linear_model)
+
+# Create a concise summary table
+# Select key elements from the model summary to display
+concise_summary <- data.frame(
+  Estimate = model_summary$coefficients[, "Estimate"],
+  StdError = model_summary$coefficients[, "Std. Error"],
+  tValue = model_summary$coefficients[, "t value"],
+  Pr = model_summary$coefficients[, "Pr(>|t|)"]
+)
+
+# Display the table with kable
+kable(concise_summary, caption = "Model Summary Statistics", align = 'c', size = "small") %>%
+  kable_styling(font_size = 6)
+```
+
+##
+
+```{r, echo = FALSE}
+# Display R-squared and Adjusted R-squared
+metrics <- data.frame(
+  Metric = c("R-squared", "Adjusted R-squared"),
+  Value = c(model_summary$r.squared, model_summary$adj.r.squared)
+)
+
+kable(metrics, caption = "Model Metrics", align = 'c', size = "small") 
+```
+
+## Cross-Validation
+
+As we are adding more factors, it is important to keep on check for the overfitting problem.
+With only adding the PrimeDiv, it is still stable.
+
+```{r,echo=FALSE}
+# Define control parameters for the cross-validation
+control <- trainControl(method = "cv", number = 10)
+
+# Fit the model using cross-validation
+cv_model <- train(Total_Enrollments ~ Year + Semester + Crs + PrimeDiv, 
+                  data = department_course_enrollment, 
+                  method = "lm", 
+                  trControl = control)
+
+# Summarize the cross-validation results
+print(cv_model)
+```
+
+## Year Delete and Interaction Check
+
+The year variable is still not significant for our previous analysis.
+Hence, I am considering delete the year variable and add interaction terms with PrimeDiv and Crs to see if it would enhance the model performance.
+
+For the reasons that it would be a fairly long summary statistics, I am not showing the result here.
+
+However, the result is that:
+
+-   Deleting year: This would not significant influence the performance of our model for that it is not changing R-squared, Adjusted R-squared and F-statistic significantly.
+-   Adding Interaction: This interaction could be a interesting perspective to check as we could see how different schools hold different performance for different courses. But it faces some over-fitting problems, also collinearity problem.
+
+## Trying to solve this Collinearity Problem
+
+With this noticed, I tried to solve this problem through some penalized regression, such as LASSO and Ridge Regression we discussed in class.
+
+```{r, echo = FALSE, echo=FALSE,fig.height=4, fig.width=6.5}
+# Assuming 'department_course_enrollment' has your data and necessary predictors
+# Prepare the matrix of predictors and the response variable vector
+predictors <- model.matrix(Total_Enrollments ~ Semester + Crs * PrimeDiv, data = department_course_enrollment)[, -1]  # Removing intercept
+response <- department_course_enrollment$Total_Enrollments
+
+# Ridge Regression
+set.seed(123)  # For reproducibility
+cv_ridge <- cv.glmnet(predictors, response, alpha = 0, lambda = 10^seq(10, -2, length = 100))
+best_lambda_ridge <- cv_ridge$lambda.min
+ridge_model <- glmnet(predictors, response, alpha = 0, lambda = best_lambda_ridge)
+
+# Lasso Regression
+cv_lasso <- cv.glmnet(predictors, response, alpha = 1, lambda = 10^seq(10, -2, length = 100))
+best_lambda_lasso <- cv_lasso$lambda.min
+lasso_model <- glmnet(predictors, response, alpha = 1, lambda = best_lambda_lasso)
+
+par(mfrow = c(2, 2))
+
+# Plot the coefficient paths
+plot(cv_ridge)
+plot(cv_lasso)
+
+# Predict using the Ridge and Lasso models
+ridge_predictions <- predict(ridge_model, s = best_lambda_ridge, newx = predictors)
+lasso_predictions <- predict(lasso_model, s = best_lambda_lasso, newx = predictors)
+
+# Calculate residuals
+ridge_residuals <- response - ridge_predictions
+lasso_residuals <- response - lasso_predictions
+
+# Plot residuals
+plot(ridge_residuals, main = "Ridge Regression Residuals")
+plot(lasso_residuals, main = "Lasso Regression Residuals")
+```
+
+## Result for Panelized Regression
+
+```{r, echo = FALSE}
+# Output the cross-validation results
+print(cv_ridge)
+print(cv_lasso)
+
+# Predict the values using the model
+predicted_values <- predict(cv_model, newdata = department_course_enrollment)
+
+# Calculate the residuals (differences between observed and predicted values)
+residuals <- department_course_enrollment$Total_Enrollments - predicted_values
+
+# Calculate the Mean Squared Error (MSE)
+mse <- mean(residuals^2)
+
+# Output the MSE
+print(mse)
+```
+
+We could see that it is improving the performance for our linear model.
+But it is more for purpose of predicting while not that useful for finding the relationship between factors.
+
+## Conclusion: Analyzing Factors Influencing Math Course Enrollments
+
+**Time-Based Trends (Model 1)**: 
+
+\footnotesize 
+- Findings: A clear trend of increasing enrollments over the years, with higher enrollments in Fall compared to Spring.
+- Implication: Indicates growing interest in math courses and potential seasonal influences on course selection.
+
+**Impact of Course Selection (Model 2)**: 
+
+\footnotesize
+- Findings: 'Year' becomes insignificant, likely due to collinearity. Significant variations in enrollments across different courses.
+- Implication: Course selection plays a crucial role in enrollment numbers, overshadowing the year-over-year trend.
+
+**Influence of Primary Department (Model 3)**: 
+
+\footnotesize
+- Findings: Primary department is a significant factor, but adding it reduces the model's explanatory power of course numbers. Potential issues of collinearity and overfitting noted.
+- Implication: The choice of major significantly influences course enrollment, but the relationship is complex and may interact with course selection.
+
+## Key Takeaways
+
+-   Enrollment trends in math courses are influenced by a combination of time (semester), course selection, and student's primary department.
+-   Course selection is a stronger predictor of enrollment numbers than time-based trends.
+-   The complex interplay between course choice and student's primary department suggests the need for nuanced curriculum planning and advisement.
+
+## Thank You and Questions
+
+\centering
+
+\Huge Thank You!
+\normalsize
+
+Questions?
